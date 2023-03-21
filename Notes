@@ -1,0 +1,103 @@
+Cheatsheet:
+
+export in-scope="Example.com" {Assign in-scope to an environment variable.}
+whois $in-scope {WHOIS lookup for the in-scope.}
+
+DNS Enumeration:
+================
+nslookup $in-scope {Identify the A record for the in-scope domain.}
+nslookup -query=A $in-scope {Identify the A record for the in-scope domain.}
+dig $in-scope @<nameserver/IP> {Identify the A record for the in-scope domain.}
+dig a $in-scope @<nameserver/IP> {Identify the A record for the in-scope domain.}
+nslookup -query=PTR <IP> {Identify the PTR record for the in-scope IP address.}
+dig -x <IP> @<nameserver/IP> {Identify the PTR record for the in-scope IP address.}
+nslookup -query=ANY $in-scope {Identify ANY records for the in-scope domain.}
+dig any $in-scope @<nameserver/IP> {Identify ANY records for the in-scope domain.}
+nslookup -query=TXT $in-scope {Identify the TXT records for the in-scope domain.}
+dig txt $in-scope @<nameserver/IP> {Identify the TXT records for the in-scope domain.}
+nslookup -query=MX $in-scope {Identify the MX records for the in-scope domain.}
+dig mx $in-scope @<nameserver/IP> {Identify the MX records for the in-scope domain.}
+
+Tools:
+
+dnsrecon,fierce,dig,nslookup
+
+Passive Subdomain Enumeration:
+==============================
+VirusTotal {https://www.virustotal.com/gui/home/url}
+Censys {https://censys.io/}
+Crt.sh {https://crt.sh/}
+binaryedge {https://www.binaryedge.io/}
+securitytrails {https://securitytrails.com/}
+criminalip {https://www.criminalip.io/en}
+shodan {https://www.shodan.io/}
+curl -s https://sonar.omnisint.io/subdomains/{domain} | jq -r '.[]' | sort -u {All subdomains for a given domain.}
+curl -s https://sonar.omnisint.io/tlds/{domain} | jq -r '.[]' | sort -u {All TLDs found for a given domain.}
+curl -s https://sonar.omnisint.io/all/{domain} | jq -r '.[]' | sort -u {All results across all TLDs for a given domain.}
+curl -s https://sonar.omnisint.io/reverse/{ip} | jq -r '.[]' | sort -u {Reverse DNS lookup on IP address.}
+curl -s https://sonar.omnisint.io/reverse/{ip}/{mask} | jq -r '.[]' | sort -u {Reverse DNS lookup of a CIDR range.}
+curl -s "https://crt.sh/?q=${in-scope}&output=json" | jq -r '.[] | "\(.name_value)\n\(.common_name)"' | sort -u {Certificate Transparency.}
+
+cat sources.txt | while read source; do theHarvester -d "${in-scope}" -b $source -f "${source}-${in-scope}";done {Searching for subdomains and other information on the sources provided in the source.txt list.}
+
+sources.txt
+===========
+baidu
+bufferoverun
+crtsh
+hackerin-scope
+otx
+projecdiscovery
+rapiddns
+sublist3r
+threatcrowd
+trello
+urlscan
+vhost
+virustotal
+zoomeye
+
+Tools:
+
+cURL, onlinetools and https://github.com/nahamsec/recon_profile/blob/master/.bash_profile
+
+Passive Infrastructure Recon:
+======================================
+Netcraft {https://www.netcraft.com/}
+WayBackMachine {http://web.archive.org/}
+WayBackURLs {https://github.com/tomnomnom/waybackurls}
+waybackurls -dates https://$in-scope > waybackurls.txt
+
+
+Active Infrastructure Identification
+=====================================
+curl -I "http://${in-scope}" {Display HTTP headers of the in-scope webserver.}
+whatweb -a https://www.facebook.com -v {Technology identification.}
+Wappalyzer {https://www.wappalyzer.com/}
+wafw00f -v https://$in-scope {WAF Fingerprinting.}
+Aquatone {https://github.com/michenriksen/aquatone}
+cat subdomain.list | aquatone -out ./aquatone -screenshot-timeout 1000 {Makes screenshots of all subdomains in the subdomain.list.}
+
+
+Subdomain Enumeration by DNS:
+=============================
+Hackerin-scope {https://hackerin-scope.com/zone-transfer/}
+SecLists {https://github.com/danielmiessler/SecLists}
+nslookup -type=any -query=AXFR $in-scope nameserver.in-scope.domain {Zone Transfer using Nslookup against the in-scope domain and its nameserver.}
+gobuster dns -q -r "${NS}" -d "${in-scope}" -w "${WORDLIST}" -p ./patterns.txt -o "gobuster_${in-scope}.txt" {Bruteforcing subdomains.}
+
+Virtual Hosts:
+==============
+curl -s http://192.168.10.10 -H "Host: randomin-scope.com" {Changing the HOST HTTP header to request a specific domain.}
+
+cat ./vhosts.list | while read vhost;do echo "\n********\nFUZZING: ${vhost}\n********";curl -s -I http://<IP address> -H "HOST: ${vhost}.in-scope.domain" | grep "Content-Length: ";done {Bruteforcing for possible virtual hosts on the in-scope domain.}
+
+ffuf -w ./vhosts -u http://<IP address> -H "HOST: FUZZ.in-scope.domain" -fs 612 {Bruteforcing for possible virtual hosts on the in-scope domain using ffuf.}
+
+Crawling:
+=========
+Burpsuite or ZAP
+
+ffuf -recursion -recursion-depth 1 -u http://192.168.10.10/FUZZ -w /opt/useful/SecLists/Discovery/Web-Content/raft-small-directories-lowercase.txt {Discovering files and folders that cannot be spotted by browsing the website.}
+
+ffuf -w ./folders.txt:FOLDERS,./wordlist.txt:WORDLIST,./extensions.txt:EXTENSIONS -u http://www.in-scope.domain/FOLDERS/WORDLISTEXTENSIONS {Mutated bruteforcing against the in-scope web server.}      
